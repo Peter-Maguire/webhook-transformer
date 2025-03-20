@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"io"
-	"net/http"
-	"strconv"
 	"webhook-transformer/config"
 )
 
@@ -16,15 +14,11 @@ type InputHTTP struct {
 }
 
 func (i *InputHTTP) SetupInput(input config.WebhookIOConfig, outputs []OutputFunc) {
-	method := input.Data["method"]
-	path := input.Data["path"]
-	returnCode, err := strconv.ParseInt(input.Data["return_code"], 10, 32)
+	method := input.Data.GetString("method")
+	path := input.Data.GetString("path")
+	returnCode := input.Data.GetInt("return_code")
 
 	bodyType := input.Data["body_type"]
-
-	if err != nil {
-		returnCode = http.StatusNoContent
-	}
 
 	fmt.Printf("Adding route %s %s\n", method, path)
 	i.e.Add(method, path, func(c echo.Context) error {
@@ -56,7 +50,7 @@ func (i *InputHTTP) SetupInput(input config.WebhookIOConfig, outputs []OutputFun
 			out(input, data)
 		}
 
-		return c.NoContent(int(returnCode))
+		return c.NoContent(returnCode)
 	})
 }
 
